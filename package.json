@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@shelf/jest-mongodb": "^4.3.2",
+    "mongodb-memory-server": "^10.1.2"
+  }
+}
