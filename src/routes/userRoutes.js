@@ -1,8 +1,8 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { User } = require('../models/User');
-const authenticateJWT = require('../middlewares/authMiddleware');
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { User } = require("../models/User");
+const authenticateJWT = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -75,32 +75,34 @@ const router = express.Router();
  *         description: "User profile fetched successfully"
  */
 
-router.post('/register', async (req, res) => {
+router.post("/register", async (req, res) => {
   const { username, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await User.create({ username, password: hashedPassword });
   res.status(201).json(user);
 });
 
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ where: { username } });
 
   if (!user) {
-    return res.status(400).json({ message: 'User not found' });
+    return res.status(400).json({ message: "User not found" });
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    return res.status(400).json({ message: 'Invalid credentials' });
+    return res.status(400).json({ message: "Invalid credentials" });
   }
 
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
   res.json({ token });
 });
 
-router.get('/profile', authenticateJWT, (req, res) => {
-  res.json({ message: 'This is a protected route', user: req.user });
+router.get("/profile", authenticateJWT, (req, res) => {
+  res.json({ message: "This is a protected route", user: req.user });
 });
 
 module.exports = router;
