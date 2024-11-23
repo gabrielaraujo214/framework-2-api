@@ -1,77 +1,37 @@
-const Task = require("../../models/task");
+const { Task } = require("../models/models");
 
 exports.createTask = async (req, res) => {
   try {
-    const task = new Task(req.body);
-    await task.save();
-    res.status(201).send(task);
-  } catch (error) {
-    res.status(400).send(error);
+    const task = await Task.create({ ...req.body, userId: req.user.id });
+    res.status(201).json(task);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
 exports.getTasks = async (req, res) => {
-  try {
-    const tasks = await Task.find({});
-    res.status(200).send(tasks);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-};
-
-exports.getTaskById = async (req, res) => {
-  const _id = req.params.id;
-
-  try {
-    const task = await Task.findById(_id);
-
-    if (!task) {
-      return res.status(404).send();
-    }
-
-    res.status(200).send(task);
-  } catch (error) {
-    res.status(500).send(error);
-  }
+  const tasks = await Task.findAll({ where: { userId: req.user.id } });
+  res.json(tasks);
 };
 
 exports.updateTask = async (req, res) => {
-  const updates = Object.keys(req.body);
-  const allowedUpdates = ["title", "description", "completed"];
-  const isValidOperation = updates.every((update) =>
-    allowedUpdates.includes(update)
-  );
-
-  if (!isValidOperation) {
-    return res.status(400).send({ error: "Invalid updates!" });
-  }
-
   try {
-    const task = await Task.findById(req.params.id);
-
-    if (!task) {
-      return res.status(404).send();
+    const task = await Task.findByPk(req.params.id);
+    if (!task || task.userId !== req.user.id) {
+      return res.status(404).json({ message: "Task not found" });
     }
-
-    updates.forEach((update) => (task[update] = req.body[update]));
-    await task.save();
-
-    res.status(200).send(task);
-  } catch (error) {
-    res.status(400).send(error);
+    await task.update(req.body);
+    res.json(task);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
 exports.deleteTask = async (req, res) => {
-  try {
-    const task = await Task.findByIdAndDelete(req.params.id);
-
-    if (!task) {
-      return res.status(404).send();
-    }
-
-    res.status(200).send(task);
-  } catch (error) {
-    res.status(500).send(error);
+  const task = await Task.findByPk(req.params.id);
+  if (!task || task.userId !== req.user.id) {
+    return res.status(404).json({ message: "Task not found" });
   }
+  await task.destroy();
+  res.status(204).end();
 };
